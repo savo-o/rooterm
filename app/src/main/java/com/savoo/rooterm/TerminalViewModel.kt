@@ -1,0 +1,66 @@
+package com.savoo.rooterm
+
+import android.app.Application
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.savoo.rooterm.data.TerminalPreferences
+import com.savoo.rooterm.data.TerminalSession
+import com.savoo.rooterm.ui.theme.TermColorTheme
+import com.savoo.rooterm.util.SuRunner
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+class TerminalViewModel(app: Application) : AndroidViewModel(app) {
+
+    private val prefs = TerminalPreferences(app)
+
+    val sessions      = mutableStateListOf<TerminalSession>()
+    val activeIndex   = mutableStateOf(0)
+
+    val termTheme    = prefs.theme.stateIn(viewModelScope, SharingStarted.Eagerly, TermColorTheme.MATERIAL_MONO)
+    val fontSize     = prefs.fontSize.stateIn(viewModelScope, SharingStarted.Eagerly, 14f)
+    val dynamicColor = prefs.dynamic.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val commandHistory = mutableStateListOf<String>()
+
+    init { newTab() }
+
+    fun newTab() {
+        val s = TerminalSession(title = "tab ${sessions.size + 1}")
+        sessions.add(s)
+        activeIndex.value = sessions.lastIndex
+        viewModelScope.launch(Dispatchers.IO) { SuRunner.initSession(s) }
+    }
+
+    fun closeTab(i: Int) {
+        if (sessions.size <= 1) return
+        SuRunner.kill(sessions[i])
+        sessions.removeAt(i)
+        activeIndex.value = minOf(activeIndex.value, sessions.lastIndex)
+    }
+
+    fun selectTab(i: Int) { activeIndex.value = i }
+
+    fun sendCommand(cmd: String) {
+        if (cmd.isBlank()) return
+        commandHistory.remove(cmd)
+        commandHistory.add(cmd)
+        val s = sessions.getOrNull(activeIndex.value) ?: return
+        viewModelScope.launch(Dispatchers.IO) { SuRunner.send(s, cmd) }
+    }
+
+    fun clearCurrent() { sessions.getOrNull(activeIndex.value)?.clear() }
+
+    fun setTheme(t: TermColorTheme)  = viewModelScope.launch { prefs.setTheme(t) }
+    fun setFontSize(f: Float)        = viewModelScope.launch { prefs.setFontSize(f) }
+    fun setDynamic(b: Boolean)       = viewModelScope.launch { prefs.setDynamic(b) }
+
+    override fun onCleared() {
+        super.onCleared()
+        sessions.forEach { SuRunner.kill(it) }
+    }
+}

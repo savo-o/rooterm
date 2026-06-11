@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#0A0A0A" android:pathData="M0,0h108v108h-108z"/>
+    <!-- Terminal prompt ">" glyph -->
+    <path android:fillColor="#BB86FC"
+          android:pathData="M28,38 L48,54 L28,70"
+          android:strokeColor="#BB86FC"
+          android:strokeWidth="6"
+          android:strokeLineCap="round"
+          android:strokeLineJoin="round"/>
+    <path android:fillColor="#BB86FC"
+          android:pathData="M52,70 L80,70"
+          android:strokeColor="#BB86FC"
+          android:strokeWidth="6"
+          android:strokeLineCap="round"/>
+</vector>
