@@ -1,6 +1,6 @@
 # Rooterm
 
-Lightweight terminal emulator for Android with root shell support.
+Lightweight, customizable terminal emulator for Android with root shell support.
 
 ## Features
 

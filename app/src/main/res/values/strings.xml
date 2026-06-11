@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">RooTerm</string>
+    <string name="app_name">rooterm</string>
     <string name="command_hint">command…</string>
 </resources>
