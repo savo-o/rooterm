@@ -18,14 +18,28 @@ fun SettingsSheet(
     currentTheme: TermColorTheme,
     currentFontSize: Float,
     dynamicColor: Boolean,
+    hideToolbar: Boolean,
+    doubleTapToolbar: Boolean,
     onThemeChange: (TermColorTheme) -> Unit,
     onFontSizeChange: (Float) -> Unit,
     onDynamicChange: (Boolean) -> Unit,
+    onHideToolbarChange: (Boolean) -> Unit,
+    onDoubleTapToolbarChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var localDynamic by remember(dynamicColor) { mutableStateOf(dynamicColor) }
-    var localFontSize by remember(currentFontSize) { mutableFloatStateOf(currentFontSize) }
-    var localTheme by remember(currentTheme) { mutableStateOf(currentTheme) }
+    var localDynamic by remember { mutableStateOf(dynamicColor) }
+    var localHideToolbar by remember { mutableStateOf(hideToolbar) }
+    var localDoubleTap by remember { mutableStateOf(doubleTapToolbar) }
+    var localFontSize by remember { mutableFloatStateOf(currentFontSize) }
+    var localTheme by remember { mutableStateOf(currentTheme) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            onDynamicChange(localDynamic)
+            onHideToolbarChange(localHideToolbar)
+            onDoubleTapToolbarChange(localDoubleTap)
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest  = onDismiss,
@@ -58,10 +72,39 @@ fun SettingsSheet(
                 }
                 Switch(
                     checked = localDynamic,
-                    onCheckedChange = {
-                        localDynamic = it   
-                        onDynamicChange(it) 
-                    }
+                    onCheckedChange = { localDynamic = it }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text("Hide toolbar", style = MaterialTheme.typography.bodyLarge)
+                    Text("Auto-hide floating buttons", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = localHideToolbar,
+                    onCheckedChange = { localHideToolbar = it }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text("Double-tap toolbar", style = MaterialTheme.typography.bodyLarge)
+                    Text("Tap toolbar area twice to show it", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(
+                    checked = localDoubleTap,
+                    onCheckedChange = { localDoubleTap = it }
                 )
             }
 
@@ -94,12 +137,8 @@ fun SettingsSheet(
                 }
                 Slider(
                     value = localFontSize,
-                    onValueChange = {
-                        localFontSize = it  
-                    },
-                    onValueChangeFinished = {
-                        onFontSizeChange(localFontSize) 
-                    },
+                    onValueChange = { localFontSize = it },
+                    onValueChangeFinished = { onFontSizeChange(localFontSize) },
                     valueRange = 10f..22f,
                     steps = 11,
                 )

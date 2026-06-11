@@ -10,8 +10,10 @@ import com.savoo.rooterm.data.TerminalSession
 import com.savoo.rooterm.ui.theme.TermColorTheme
 import com.savoo.rooterm.util.SuRunner
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class TerminalViewModel(app: Application) : AndroidViewModel(app) {
@@ -24,10 +26,20 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
     val termTheme    = prefs.theme.stateIn(viewModelScope, SharingStarted.Eagerly, TermColorTheme.MATERIAL_MONO)
     val fontSize     = prefs.fontSize.stateIn(viewModelScope, SharingStarted.Eagerly, 14f)
     val dynamicColor = prefs.dynamic.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val hideToolbar  = prefs.hideToolbar.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val doubleTapToolbar = prefs.doubleTapToolbar.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val commandHistory = mutableStateListOf<String>()
 
-    init { newTab() }
+    init {
+        newTab()
+        viewModelScope.launch(Dispatchers.Main) {
+            while (isActive) {
+                delay(50)
+                for (s in sessions) s.flushPending()
+            }
+        }
+    }
 
     fun newTab() {
         val s = TerminalSession(title = "tab ${sessions.size + 1}")
@@ -55,9 +67,16 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
 
     fun clearCurrent() { sessions.getOrNull(activeIndex.value)?.clear() }
 
-    fun setTheme(t: TermColorTheme)  = viewModelScope.launch { prefs.setTheme(t) }
-    fun setFontSize(f: Float)        = viewModelScope.launch { prefs.setFontSize(f) }
-    fun setDynamic(b: Boolean)       = viewModelScope.launch { prefs.setDynamic(b) }
+    fun sendInterrupt() {
+        val s = sessions.getOrNull(activeIndex.value) ?: return
+        viewModelScope.launch(Dispatchers.IO) { SuRunner.sendInterrupt(s) }
+    }
+
+    fun setTheme(t: TermColorTheme)     = viewModelScope.launch { prefs.setTheme(t) }
+    fun setFontSize(f: Float)           = viewModelScope.launch { prefs.setFontSize(f) }
+    fun setDynamic(b: Boolean)          = viewModelScope.launch { prefs.setDynamic(b) }
+    fun setHideToolbar(b: Boolean)      = viewModelScope.launch { prefs.setHideToolbar(b) }
+    fun setDoubleTapToolbar(b: Boolean) = viewModelScope.launch { prefs.setDoubleTapToolbar(b) }
 
     override fun onCleared() {
         super.onCleared()

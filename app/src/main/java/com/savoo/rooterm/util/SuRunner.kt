@@ -4,7 +4,6 @@ import android.util.Log
 import com.savoo.rooterm.data.OutputType
 import com.savoo.rooterm.data.TerminalSession
 import java.io.BufferedReader
-import java.io.BufferedWriter
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 
@@ -17,19 +16,20 @@ object SuRunner {
         return try {
             val proc = ProcessBuilder("su").redirectErrorStream(false).start()
             session.process = proc
+            session.writer = java.io.BufferedWriter(OutputStreamWriter(proc.outputStream))
             session.isAlive = true
             startReader(session, proc, false)
             startReader(session, proc, true)
 
-            write(proc, "id")
-            write(proc, "echo $SENTINEL")
+            write(session, "id")
+            write(session, "echo $SENTINEL")
             Thread.sleep(900)
 
             val ok = session.output.any { it.text.contains("uid=0") || it.text.contains("root") }
             session.isRoot = ok
             if (ok) {
                 session.addLine("◆ root access granted", OutputType.INFO)
-                write(proc, "export PS1='# '")
+                write(session, "export PS1='# '")
             } else {
                 session.addLine("✗ root denied", OutputType.ERROR)
                 proc.destroy(); session.isAlive = false
@@ -46,22 +46,42 @@ object SuRunner {
         if (cmd.isBlank() || !session.isAlive) return
         session.addLine("# $cmd", OutputType.COMMAND)
         try {
-            write(session.process ?: return, cmd)
-            write(session.process ?: return, "echo $SENTINEL")
+            write(session, cmd)
+            write(session, "echo $SENTINEL")
         } catch (e: Exception) {
             session.addLine("error: ${e.message}", OutputType.ERROR)
         }
     }
 
     fun kill(session: TerminalSession) {
-        try { write(session.process ?: return, "exit") } catch (_: Exception) {}
+        try { write(session, "exit") } catch (_: Exception) {}
         session.kill()
     }
 
-    private fun write(proc: Process, cmd: String) {
-        BufferedWriter(OutputStreamWriter(proc.outputStream)).run {
-            write("$cmd\n"); flush()
-        }
+    fun sendInterrupt(session: TerminalSession) {
+        if (!session.isAlive) return
+        val proc = session.process ?: return
+
+        try {
+            val suPid = proc.javaClass.getMethod("pid").invoke(proc) as Int
+            ProcessBuilder("su", "-c", "kill -2 -- -$suPid")
+                .redirectErrorStream(true)
+                .start()
+                .waitFor(2, java.util.concurrent.TimeUnit.SECONDS)
+        } catch (_: Exception) {}
+
+        try {
+            proc.outputStream.write(3)
+            proc.outputStream.flush()
+        } catch (_: Exception) {}
+
+        session.addLine("^C", OutputType.INFO)
+    }
+
+    private fun write(session: TerminalSession, cmd: String) {
+        val w = session.writer ?: throw IllegalStateException("no writer")
+        w.write("$cmd\n")
+        w.flush()
     }
 
     private fun startReader(session: TerminalSession, proc: Process, isErr: Boolean) {

@@ -11,9 +11,11 @@ import kotlinx.coroutines.flow.map
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "rooterm_prefs")
 
 object PrefKeys {
-    val THEME        = stringPreferencesKey("term_theme")
-    val FONT_SIZE    = floatPreferencesKey("font_size")
-    val DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
+    val THEME              = stringPreferencesKey("term_theme")
+    val FONT_SIZE          = floatPreferencesKey("font_size")
+    val DYNAMIC_COLOR      = booleanPreferencesKey("dynamic_color")
+    val HIDE_TOOLBAR       = booleanPreferencesKey("hide_toolbar")
+    val DOUBLE_TAP_TOOLBAR = booleanPreferencesKey("double_tap_toolbar")
 }
 
 class TerminalPreferences(private val ctx: Context) {
@@ -23,8 +25,12 @@ class TerminalPreferences(private val ctx: Context) {
     }
     val fontSize: Flow<Float>   = ctx.dataStore.data.map { it[PrefKeys.FONT_SIZE] ?: 14f }
     val dynamic: Flow<Boolean>  = ctx.dataStore.data.map { it[PrefKeys.DYNAMIC_COLOR] ?: true }
+    val hideToolbar: Flow<Boolean> = ctx.dataStore.data.map { it[PrefKeys.HIDE_TOOLBAR] ?: false }
+    val doubleTapToolbar: Flow<Boolean> = ctx.dataStore.data.map { it[PrefKeys.DOUBLE_TAP_TOOLBAR] ?: true }
 
     suspend fun setTheme(t: TermColorTheme) = ctx.dataStore.edit { it[PrefKeys.THEME] = t.name }
     suspend fun setFontSize(s: Float)       = ctx.dataStore.edit { it[PrefKeys.FONT_SIZE] = s }
     suspend fun setDynamic(b: Boolean)      = ctx.dataStore.edit { it[PrefKeys.DYNAMIC_COLOR] = b }
+    suspend fun setHideToolbar(b: Boolean)  = ctx.dataStore.edit { it[PrefKeys.HIDE_TOOLBAR] = b }
+    suspend fun setDoubleTapToolbar(b: Boolean) = ctx.dataStore.edit { it[PrefKeys.DOUBLE_TAP_TOOLBAR] = b }
 }

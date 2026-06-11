@@ -32,21 +32,20 @@ fun TerminalOutput(
 ) {
     val tc = TermTheme.colors
 
-    SelectionContainer {
-        LazyColumn(
-            state   = listState,
-            modifier = modifier
-                .fillMaxSize()
-                .background(tc.background)
-                .padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
-        ) {
-            itemsIndexed(
-                items = lines,
-                key   = { _, line -> line.id },
-            ) { _, line ->
-                TermLine(line)
-            }
+    LazyColumn(
+        state   = listState,
+        modifier = modifier
+            .fillMaxSize()
+            .background(tc.background)
+            .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+    ) {
+        itemsIndexed(
+            items = lines,
+            key   = { _, line -> line.id },
+            contentType = { _, line -> line.type },
+        ) { _, line ->
+            TermLine(line)
         }
     }
 }
@@ -136,27 +135,34 @@ private fun TermLine(line: OutputLine) {
     }
 }
 
-private fun buildStdout(text: String, tc: TermColors): AnnotatedString = buildAnnotatedString {
-    val pathRegex  = Regex("""(/[\w./\-_]+)""")
-    val numRegex   = Regex("""\b(\d+)\b""")
-    val permRegex  = Regex("""([rwx\-]{9,10})""")
+private val PATH_REGEX  = Regex("""(/[\w./\-_]+)""")
+private val NUM_REGEX   = Regex("""\b(\d+)\b""")
+private val PERM_REGEX  = Regex("""([rwx\-]{9,10})""")
+private const val REGEX_LIMIT = 200
+
+private fun buildStdout(text: String, tc: TermColors): AnnotatedString {
+    if (text.length > REGEX_LIMIT) {
+        return AnnotatedString(text)
+    }
 
     data class Span(val range: IntRange, val color: androidx.compose.ui.graphics.Color, val weight: FontWeight = FontWeight.Normal)
 
     val spans = mutableListOf<Span>()
-    pathRegex.findAll(text).forEach  { spans.add(Span(it.range, tc.accentSecondary, FontWeight.Medium)) }
-    permRegex.findAll(text).forEach  { spans.add(Span(it.range, tc.accent.copy(alpha = 0.85f))) }
-    numRegex.findAll(text).forEach   { m ->
+    PATH_REGEX.findAll(text).forEach { spans.add(Span(it.range, tc.accentSecondary, FontWeight.Medium)) }
+    PERM_REGEX.findAll(text).forEach { spans.add(Span(it.range, tc.accent.copy(alpha = 0.85f))) }
+    NUM_REGEX.findAll(text).forEach  { m ->
         if (spans.none { m.range.first in it.range }) spans.add(Span(m.range, tc.dimColor.copy(alpha = 0.8f)))
     }
     spans.sortBy { it.range.first }
 
-    var cursor = 0
-    for (span in spans) {
-        if (span.range.first < cursor) continue
-        withStyle(SpanStyle(color = tc.foreground)) { append(text.substring(cursor, span.range.first)) }
-        withStyle(SpanStyle(color = span.color, fontWeight = span.weight)) { append(text.substring(span.range)) }
-        cursor = span.range.last + 1
+    return buildAnnotatedString {
+        var cursor = 0
+        for (span in spans) {
+            if (span.range.first < cursor) continue
+            withStyle(SpanStyle(color = tc.foreground)) { append(text.substring(cursor, span.range.first)) }
+            withStyle(SpanStyle(color = span.color, fontWeight = span.weight)) { append(text.substring(span.range)) }
+            cursor = span.range.last + 1
+        }
+        if (cursor < text.length) withStyle(SpanStyle(color = tc.foreground)) { append(text.substring(cursor)) }
     }
-    if (cursor < text.length) withStyle(SpanStyle(color = tc.foreground)) { append(text.substring(cursor)) }
 }
