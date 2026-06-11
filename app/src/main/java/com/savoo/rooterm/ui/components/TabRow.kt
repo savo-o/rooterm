@@ -41,7 +41,6 @@ fun TermTabRow(
     onClose: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val cs = MaterialTheme.colorScheme
     val tc = TermTheme.colors
 
     Row(
@@ -74,7 +73,7 @@ fun TermTabRow(
             modifier = Modifier
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(cs.surfaceContainerHighest)
+                .background(tc.dimColor.copy(alpha = 0.3f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -85,7 +84,7 @@ fun TermTabRow(
             Icon(
                 Icons.Default.Add,
                 contentDescription = "New tab",
-                tint     = cs.onSurfaceVariant,
+                tint     = tc.foreground,
                 modifier = Modifier.size(16.dp),
             )
         }
@@ -100,7 +99,6 @@ private fun TermTab(
     onClose: () -> Unit,
     canClose: Boolean,
 ) {
-    val cs = MaterialTheme.colorScheme
     val tc = TermTheme.colors
 
     val bgAlpha by animateFloatAsState(
@@ -125,7 +123,7 @@ private fun TermTab(
             .scale(scale)
             .clip(RoundedCornerShape(20.dp))
             .background(
-                cs.primaryContainer.copy(alpha = bgAlpha)
+                tc.accent.copy(alpha = bgAlpha * 0.15f)
             )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -147,7 +145,7 @@ private fun TermTab(
                 text       = session.title,
                 fontSize   = 12.sp,
                 fontFamily = FontFamily.Monospace,
-                color      = if (selected) cs.onPrimaryContainer else cs.onSurfaceVariant,
+                color      = if (selected) tc.foreground else tc.dimColor,
                 maxLines   = 1,
                 overflow   = TextOverflow.Ellipsis,
                 modifier   = Modifier.widthIn(max = 72.dp),
@@ -168,8 +166,8 @@ private fun TermTab(
                     Icon(
                         Icons.Default.Close,
                         contentDescription = "Close",
-                        tint     = if (selected) cs.onPrimaryContainer.copy(alpha = 0.7f)
-                                   else cs.onSurfaceVariant.copy(alpha = 0.5f),
+                        tint     = if (selected) tc.foreground.copy(alpha = 0.7f)
+                                   else tc.dimColor.copy(alpha = 0.5f),
                         modifier = Modifier.size(10.dp),
                     )
                 }

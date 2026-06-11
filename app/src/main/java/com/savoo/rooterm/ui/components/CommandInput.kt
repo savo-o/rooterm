@@ -40,7 +40,6 @@ fun CommandInput(
     var historyIdx   by remember { mutableIntStateOf(-1) }
     val focusReq     = remember { FocusRequester() }
     val tc           = TermTheme.colors
-    val cs           = MaterialTheme.colorScheme
     val hasText      = text.isNotBlank()
 
     val btnScale by animateFloatAsState(
@@ -77,7 +76,7 @@ fun CommandInput(
         modifier = modifier
             .fillMaxWidth()
             .background(tc.background)
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .padding(horizontal = 12.dp, vertical = 17.dp),
     ) {
         Row(
             verticalAlignment     = Alignment.CenterVertically,
@@ -110,7 +109,7 @@ fun CommandInput(
                     .scale(btnScale)
                     .size(44.dp)
                     .clip(RoundedCornerShape(btnCorner))
-                    .background(if (hasText) tc.accent else cs.surfaceContainerHighest),
+                    .background(if (hasText) tc.accent else tc.dimColor.copy(alpha = 0.3f)),
                 contentAlignment = Alignment.Center,
             ) {
                 IconButton(
@@ -121,7 +120,7 @@ fun CommandInput(
                     Icon(
                         Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Send",
-                        tint     = if (hasText) cs.onPrimary else cs.onSurfaceVariant.copy(alpha = 0.4f),
+                        tint     = if (hasText) tc.background else tc.foreground.copy(alpha = 0.4f),
                         modifier = Modifier.size(18.dp),
                     )
                 }
@@ -140,7 +139,6 @@ private fun BasicTextField_Wrapper(
     modifier: Modifier = Modifier,
 ) {
     val tc = TermTheme.colors
-    val cs = MaterialTheme.colorScheme
 
     TextField(
         value         = text,
@@ -179,7 +177,7 @@ private fun MiniHistBtn(
     onClick: () -> Unit,
     enabled: Boolean,
 ) {
-    val cs = MaterialTheme.colorScheme
+    val tc = TermTheme.colors
     IconButton(
         onClick  = onClick,
         enabled  = enabled,
@@ -189,7 +187,7 @@ private fun MiniHistBtn(
             icon,
             contentDescription = null,
             modifier = Modifier.size(14.dp),
-            tint     = if (enabled) cs.onSurfaceVariant else cs.onSurface.copy(alpha = 0.25f),
+            tint     = if (enabled) tc.foreground else tc.dimColor.copy(alpha = 0.25f),
         )
     }
 }

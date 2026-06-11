@@ -36,10 +36,10 @@ fun TerminalScreen(vm: TerminalViewModel) {
     val session          = sessions.getOrNull(activeIdx)
     val hideToolbar      = vm.hideToolbar.collectAsState()
     val doubleTapEnabled = vm.doubleTapToolbar.collectAsState()
+    val isDarkMode       = vm.darkMode.collectAsState()
 
     val termTheme = vm.termTheme.collectAsState()
     val fontSize  = vm.fontSize.collectAsState()
-    val dynColor  = vm.dynamicColor.collectAsState()
 
     val listState = rememberLazyListState()
     val tc        = TermTheme.colors
@@ -70,7 +70,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
     }
 
     LaunchedEffect(Unit) {
-        showToolbarFor(2500)
+        showToolbarFor(1000)
     }
 
     LaunchedEffect(listState.isScrollInProgress) {
@@ -176,17 +176,17 @@ fun TerminalScreen(vm: TerminalViewModel) {
                     FloatingToolbarDefaults.VibrantFloatingActionButton(
                         onClick        = vm::newTab,
                         containerColor = tc.accent,
+                        contentColor   = tc.background,
                     ) {
                         Icon(Icons.Default.Add, "New tab")
                     }
                 },
-                colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
             ) {
                 IconButton(onClick = vm::clearCurrent) {
-                    Icon(Icons.Default.DeleteSweep, "Clear")
+                    Icon(Icons.Default.DeleteSweep, "Clear", tint = tc.foreground)
                 }
                 IconButton(onClick = { showSettings = true }) {
-                    Icon(Icons.Default.Settings, "Settings")
+                    Icon(Icons.Default.Settings, "Settings", tint = tc.foreground)
                 }
             }
         }
@@ -196,14 +196,14 @@ fun TerminalScreen(vm: TerminalViewModel) {
         SettingsSheet(
             currentTheme           = termTheme.value,
             currentFontSize        = fontSize.value,
-            dynamicColor           = dynColor.value,
             hideToolbar            = hideToolbar.value,
             doubleTapToolbar       = doubleTapEnabled.value,
+            isDarkMode             = isDarkMode.value,
             onThemeChange          = vm::setTheme,
             onFontSizeChange       = vm::setFontSize,
-            onDynamicChange        = vm::setDynamic,
             onHideToolbarChange    = vm::setHideToolbar,
             onDoubleTapToolbarChange = vm::setDoubleTapToolbar,
+            onDarkModeChange       = vm::setDarkMode,
             onDismiss              = { showSettings = false },
         )
     }

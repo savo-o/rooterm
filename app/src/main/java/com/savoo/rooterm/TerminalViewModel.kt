@@ -25,9 +25,9 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
 
     val termTheme    = prefs.theme.stateIn(viewModelScope, SharingStarted.Eagerly, TermColorTheme.MATERIAL_MONO)
     val fontSize     = prefs.fontSize.stateIn(viewModelScope, SharingStarted.Eagerly, 14f)
-    val dynamicColor = prefs.dynamic.stateIn(viewModelScope, SharingStarted.Eagerly, true)
-    val hideToolbar  = prefs.hideToolbar.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val hideToolbar  = prefs.hideToolbar.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     val doubleTapToolbar = prefs.doubleTapToolbar.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val darkMode = prefs.darkMode.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val commandHistory = mutableStateListOf<String>()
 
@@ -74,9 +74,9 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setTheme(t: TermColorTheme)     = viewModelScope.launch { prefs.setTheme(t) }
     fun setFontSize(f: Float)           = viewModelScope.launch { prefs.setFontSize(f) }
-    fun setDynamic(b: Boolean)          = viewModelScope.launch { prefs.setDynamic(b) }
     fun setHideToolbar(b: Boolean)      = viewModelScope.launch { prefs.setHideToolbar(b) }
     fun setDoubleTapToolbar(b: Boolean) = viewModelScope.launch { prefs.setDoubleTapToolbar(b) }
+    fun setDarkMode(b: Boolean)         = viewModelScope.launch { prefs.setDarkMode(b) }
 
     override fun onCleared() {
         super.onCleared()

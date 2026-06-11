@@ -58,7 +58,7 @@ private fun TermLine(line: OutputLine) {
 
     when (line.type) {
         OutputType.COMMAND -> {
-            val annotated = remember(line.id) {
+            val annotated = remember(line.id, tc) {
                 buildAnnotatedString {
                     withStyle(SpanStyle(color = tc.promptColor, fontWeight = FontWeight.Bold)) { append("# ") }
                     withStyle(SpanStyle(color = tc.accent, fontWeight = FontWeight.SemiBold)) {
@@ -121,7 +121,7 @@ private fun TermLine(line: OutputLine) {
         }
 
         OutputType.STDOUT -> {
-            val annotated = remember(line.id) { buildStdout(line.text, tc) }
+            val annotated = remember(line.id, tc) { buildStdout(line.text, tc) }
             Text(
                 text       = annotated,
                 fontSize   = fontSize,
@@ -142,7 +142,9 @@ private const val REGEX_LIMIT = 200
 
 private fun buildStdout(text: String, tc: TermColors): AnnotatedString {
     if (text.length > REGEX_LIMIT) {
-        return AnnotatedString(text)
+        return buildAnnotatedString {
+            withStyle(SpanStyle(color = tc.foreground)) { append(text) }
+        }
     }
 
     data class Span(val range: IntRange, val color: androidx.compose.ui.graphics.Color, val weight: FontWeight = FontWeight.Normal)

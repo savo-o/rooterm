@@ -27,10 +27,8 @@ object SuRunner {
 
             val ok = session.output.any { it.text.contains("uid=0") || it.text.contains("root") }
             session.isRoot = ok
-            if (ok) {
-                session.addLine("◆ root access granted", OutputType.INFO)
-                write(session, "export PS1='# '")
-            } else {
+            session.output.removeAll { it.text.contains("uid=") || it.text.contains("gid=") }
+            if (!ok) {
                 session.addLine("✗ root denied", OutputType.ERROR)
                 proc.destroy(); session.isAlive = false
             }

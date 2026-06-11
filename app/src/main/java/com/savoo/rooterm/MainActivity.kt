@@ -19,12 +19,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             val theme    = vm.termTheme.collectAsState()
             val fontSize = vm.fontSize.collectAsState()
-            val dynColor = vm.dynamicColor.collectAsState()
+            val darkMode = vm.darkMode.collectAsState()
 
             RooTermTheme(
                 termColorTheme  = theme.value,
                 fontSize        = fontSize.value.sp,
-                useDynamicColor = dynColor.value,
+                useDynamicColor = false,
+                isDarkMode      = darkMode.value,
             ) {
                 TerminalScreen(vm = vm)
             }

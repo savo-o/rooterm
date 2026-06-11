@@ -11,40 +11,56 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.savoo.rooterm.ui.theme.TermColorTheme
+import com.savoo.rooterm.ui.theme.TermTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsSheet(
     currentTheme: TermColorTheme,
     currentFontSize: Float,
-    dynamicColor: Boolean,
     hideToolbar: Boolean,
     doubleTapToolbar: Boolean,
+    isDarkMode: Boolean,
     onThemeChange: (TermColorTheme) -> Unit,
     onFontSizeChange: (Float) -> Unit,
-    onDynamicChange: (Boolean) -> Unit,
     onHideToolbarChange: (Boolean) -> Unit,
     onDoubleTapToolbarChange: (Boolean) -> Unit,
+    onDarkModeChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var localDynamic by remember { mutableStateOf(dynamicColor) }
     var localHideToolbar by remember { mutableStateOf(hideToolbar) }
     var localDoubleTap by remember { mutableStateOf(doubleTapToolbar) }
+    var localDarkMode by remember { mutableStateOf(isDarkMode) }
     var localFontSize by remember { mutableFloatStateOf(currentFontSize) }
     var localTheme by remember { mutableStateOf(currentTheme) }
 
+    val tc = TermTheme.colors
+
+    val switchColors = SwitchDefaults.colors(
+        checkedThumbColor   = tc.background,
+        checkedTrackColor   = tc.accent,
+        uncheckedThumbColor = tc.dimColor,
+        uncheckedTrackColor = tc.dimColor.copy(alpha = 0.3f),
+    )
+
+    val sliderColors = SliderDefaults.colors(
+        thumbColor       = tc.accent,
+        activeTrackColor = tc.accent,
+        inactiveTrackColor = tc.dimColor.copy(alpha = 0.3f),
+    )
+
     DisposableEffect(Unit) {
         onDispose {
-            onDynamicChange(localDynamic)
             onHideToolbarChange(localHideToolbar)
             onDoubleTapToolbarChange(localDoubleTap)
+            onDarkModeChange(localDarkMode)
         }
     }
 
     ModalBottomSheet(
         onDismissRequest  = onDismiss,
         sheetState        = rememberModalBottomSheetState(skipPartiallyExpanded = false),
-        containerColor    = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor    = tc.surface,
     ) {
         Column(
             modifier = Modifier
@@ -54,11 +70,11 @@ fun SettingsSheet(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.Palette, null, tint = MaterialTheme.colorScheme.primary)
-                Text("Settings", style = MaterialTheme.typography.titleLarge)
+                Icon(Icons.Default.Palette, null, tint = tc.accent)
+                Text("Settings", color = tc.foreground, style = MaterialTheme.typography.titleLarge)
             }
 
-            HorizontalDivider()
+            HorizontalDivider(color = tc.dimColor.copy(alpha = 0.3f))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -66,13 +82,13 @@ fun SettingsSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    Text("Dynamic color", style = MaterialTheme.typography.bodyLarge)
-                    Text("Follow wallpaper accent", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Dark mode", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
+                    Text("Switch light and dark theme", color = tc.dimColor, style = MaterialTheme.typography.bodySmall)
                 }
                 Switch(
-                    checked = localDynamic,
-                    onCheckedChange = { localDynamic = it }
+                    checked = localDarkMode,
+                    onCheckedChange = { localDarkMode = it },
+                    colors = switchColors,
                 )
             }
 
@@ -82,13 +98,13 @@ fun SettingsSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    Text("Hide toolbar", style = MaterialTheme.typography.bodyLarge)
-                    Text("Auto-hide floating buttons", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Wait before hide toolbar", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
+                    Text("Toolbar hides after inactivity", color = tc.dimColor, style = MaterialTheme.typography.bodySmall)
                 }
                 Switch(
                     checked = localHideToolbar,
-                    onCheckedChange = { localHideToolbar = it }
+                    onCheckedChange = { localHideToolbar = it },
+                    colors = switchColors,
                 )
             }
 
@@ -98,18 +114,18 @@ fun SettingsSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
-                    Text("Double-tap toolbar", style = MaterialTheme.typography.bodyLarge)
-                    Text("Tap toolbar area twice to show it", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Double-tap toolbar", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
+                    Text("Tap toolbar area twice to show it", color = tc.dimColor, style = MaterialTheme.typography.bodySmall)
                 }
                 Switch(
                     checked = localDoubleTap,
-                    onCheckedChange = { localDoubleTap = it }
+                    onCheckedChange = { localDoubleTap = it },
+                    colors = switchColors,
                 )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Terminal theme", style = MaterialTheme.typography.bodyLarge)
+                Text("Terminal theme", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(TermColorTheme.values().toList()) { t ->
                         FilterChip(
@@ -120,8 +136,8 @@ fun SettingsSheet(
                             },
                             label    = { Text(t.displayName) },
                             colors   = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedLabelColor     = MaterialTheme.colorScheme.onPrimaryContainer,
+                                selectedContainerColor = tc.accent,
+                                selectedLabelColor     = tc.background,
                             ),
                         )
                     }
@@ -130,10 +146,8 @@ fun SettingsSheet(
 
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Font size", style = MaterialTheme.typography.bodyLarge)
-                    Text("${localFontSize.toInt()} sp",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary)
+                    Text("Font size", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
+                    Text("${localFontSize.toInt()} sp", color = tc.accent, style = MaterialTheme.typography.bodyMedium)
                 }
                 Slider(
                     value = localFontSize,
@@ -141,6 +155,7 @@ fun SettingsSheet(
                     onValueChangeFinished = { onFontSizeChange(localFontSize) },
                     valueRange = 10f..22f,
                     steps = 11,
+                    colors = sliderColors,
                 )
             }
         }
