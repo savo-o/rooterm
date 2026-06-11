@@ -31,11 +31,15 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
 
     val commandHistory = mutableStateListOf<String>()
 
+    companion object {
+        private const val MAX_HISTORY = 200
+    }
+
     init {
         newTab()
         viewModelScope.launch(Dispatchers.Main) {
             while (isActive) {
-                delay(50)
+                delay(100)
                 for (s in sessions) s.flushPending()
             }
         }
@@ -61,7 +65,11 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
         if (cmd.isBlank()) return
         commandHistory.remove(cmd)
         commandHistory.add(cmd)
+        if (commandHistory.size > MAX_HISTORY) {
+            commandHistory.removeRange(0, commandHistory.size - MAX_HISTORY)
+        }
         val s = sessions.getOrNull(activeIndex.value) ?: return
+        s.scrollToBottom = true
         viewModelScope.launch(Dispatchers.IO) { SuRunner.send(s, cmd) }
     }
 

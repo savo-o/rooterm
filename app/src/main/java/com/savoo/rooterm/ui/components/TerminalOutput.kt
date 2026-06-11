@@ -18,6 +18,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.savoo.rooterm.data.OutputLine
 import com.savoo.rooterm.data.OutputType
@@ -32,29 +33,36 @@ fun TerminalOutput(
 ) {
     val tc = TermTheme.colors
 
-    LazyColumn(
-        state   = listState,
-        modifier = modifier
-            .fillMaxSize()
-            .background(tc.background)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp),
-    ) {
-        itemsIndexed(
-            items = lines,
-            key   = { _, line -> line.id },
-            contentType = { _, line -> line.type },
-        ) { _, line ->
-            TermLine(line)
+    SelectionContainer {
+        LazyColumn(
+            state   = listState,
+            modifier = modifier
+                .fillMaxSize()
+                .background(tc.background)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(0.dp),
+        ) {
+            itemsIndexed(
+                items = lines,
+                key   = { _, line -> line.id },
+                contentType = { _, line -> line.type },
+            ) { _, line ->
+                TermLine(line)
+            }
         }
     }
 }
+
+private fun TextUnit.lineHeight(factor: Float): TextUnit =
+    TextUnit(value * factor, type)
 
 @Composable
 private fun TermLine(line: OutputLine) {
     val tc         = TermTheme.colors
     val fontSize   = TermTheme.fontSize
     val fontFamily = TermTheme.fontFamily
+    val lh14       = fontSize.lineHeight(1.4f)
+    val lh15       = fontSize.lineHeight(1.5f)
 
     when (line.type) {
         OutputType.COMMAND -> {
@@ -78,9 +86,7 @@ private fun TermLine(line: OutputLine) {
                     text       = annotated,
                     fontSize   = fontSize,
                     fontFamily = fontFamily,
-                    lineHeight = (fontSize.value * 1.5f).let {
-                        androidx.compose.ui.unit.TextUnit(it, fontSize.type)
-                    },
+                    lineHeight = lh15,
                 )
             }
         }
@@ -114,9 +120,7 @@ private fun TermLine(line: OutputLine) {
                 fontFamily = fontFamily,
                 color     = tc.errorColor,
                 modifier  = Modifier.padding(vertical = 1.dp),
-                lineHeight = (fontSize.value * 1.4f).let {
-                    androidx.compose.ui.unit.TextUnit(it, fontSize.type)
-                },
+                lineHeight = lh14,
             )
         }
 
@@ -127,9 +131,7 @@ private fun TermLine(line: OutputLine) {
                 fontSize   = fontSize,
                 fontFamily = fontFamily,
                 modifier   = Modifier.padding(vertical = 0.5.dp),
-                lineHeight = (fontSize.value * 1.4f).let {
-                    androidx.compose.ui.unit.TextUnit(it, fontSize.type)
-                },
+                lineHeight = lh14,
             )
         }
     }

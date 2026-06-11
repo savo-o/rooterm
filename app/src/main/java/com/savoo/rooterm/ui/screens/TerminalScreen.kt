@@ -74,6 +74,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
     }
 
     LaunchedEffect(listState.isScrollInProgress) {
+        session?.isScrolling = listState.isScrollInProgress
         if (!listState.isScrollInProgress) {
             if (hideToolbar.value) {
                 scheduleHide()
@@ -102,6 +103,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
     }
 
     LaunchedEffect(session?.id) {
+        sessions.forEach { it.isScrolling = false }
         toolbarVisible = false
         lastFirstVisible = 0
     }
@@ -111,9 +113,12 @@ fun TerminalScreen(vm: TerminalViewModel) {
             .distinctUntilChanged()
             .collect { size ->
                 if (size > 0) {
-                    listState.scrollToItem(size - 1)
-                    if (!hideToolbar.value) toolbarVisible = false
-                    if (hideToolbar.value) toolbarVisible = false
+                    val force = session?.scrollToBottom == true
+                    if (force) session?.scrollToBottom = false
+                    if (force || atBottom()) {
+                        listState.scrollToItem(size - 1)
+                        toolbarVisible = false
+                    }
                 }
             }
     }
