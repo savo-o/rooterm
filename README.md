@@ -14,7 +14,7 @@ Lightweight terminal emulator for Android with root shell support.
 
 ## Screenshots
 
-<img src="screenshots/main.png" width="300">
+<img src="screenshots/main.jpg" width="300">
 ## Requirements
 
 * Android 8.0+
