@@ -88,38 +88,38 @@ fun termColorsFor(theme: TermColorTheme, materialAccent: Color, isDark: Boolean)
             background = Color(0xFF080808), surface = Color(0xFF141414),
             foreground = Color(0xFFE2E2E2), accent = materialAccent,
             accentSecondary = materialAccent.copy(alpha = 0.65f),
-            errorColor = Color(0xFFCF6679), dimColor = Color(0xFF555555),
+            errorColor = Color(0xFFCF6679), dimColor = Color(0xFF777777),
             promptColor = materialAccent,
         )
         TermColorTheme.DRACULA -> TermColors(
             background = Color(0xFF1A1B26), surface = Color(0xFF24253A),
             foreground = Color(0xFFF8F8F2), accent = Color(0xFFBD93F9),
             accentSecondary = Color(0xFF8BE9FD), errorColor = Color(0xFFFF5555),
-            dimColor = Color(0xFF44475A), promptColor = Color(0xFFFF79C6),
+            dimColor = Color(0xFF5E6178), promptColor = Color(0xFFFF79C6),
         )
         TermColorTheme.NORD -> TermColors(
             background = Color(0xFF1E2230), surface = Color(0xFF252B3B),
             foreground = Color(0xFFD8DEE9), accent = Color(0xFF88C0D0),
             accentSecondary = Color(0xFF81A1C1), errorColor = Color(0xFFBF616A),
-            dimColor = Color(0xFF3B4252), promptColor = Color(0xFFA3BE8C),
+            dimColor = Color(0xFF4E5668), promptColor = Color(0xFFA3BE8C),
         )
         TermColorTheme.SOLARIZED -> TermColors(
             background = Color(0xFF002B36), surface = Color(0xFF073642),
             foreground = Color(0xFF93A1A1), accent = Color(0xFF268BD2),
             accentSecondary = Color(0xFF2AA198), errorColor = Color(0xFFDC322F),
-            dimColor = Color(0xFF335056), promptColor = Color(0xFFB58900),
+            dimColor = Color(0xFF4A6E75), promptColor = Color(0xFFB58900),
         )
         TermColorTheme.GRUVBOX -> TermColors(
             background = Color(0xFF1D2021), surface = Color(0xFF282828),
             foreground = Color(0xFFEBDBB2), accent = Color(0xFFB8BB26),
             accentSecondary = Color(0xFFFABD2F), errorColor = Color(0xFFCC241D),
-            dimColor = Color(0xFF3C3836), promptColor = Color(0xFFFE8019),
+            dimColor = Color(0xFF585550), promptColor = Color(0xFFFE8019),
         )
         TermColorTheme.ONE_DARK -> TermColors(
             background = Color(0xFF1A1D27), surface = Color(0xFF21242E),
             foreground = Color(0xFFABB2BF), accent = Color(0xFF61AFEF),
             accentSecondary = Color(0xFF98C379), errorColor = Color(0xFFE06C75),
-            dimColor = Color(0xFF3E4452), promptColor = Color(0xFFC678DD),
+            dimColor = Color(0xFF5A6270), promptColor = Color(0xFFC678DD),
         )
     }
 }

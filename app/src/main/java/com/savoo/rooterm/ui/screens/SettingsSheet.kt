@@ -11,7 +11,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -19,7 +18,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -145,16 +147,23 @@ private fun SettingsContent(
     val haptic = LocalHapticFeedback.current
 
     val switchColors = SwitchDefaults.colors(
-        checkedThumbColor   = tc.background,
-        checkedTrackColor   = tc.accent,
-        uncheckedThumbColor = tc.dimColor,
-        uncheckedTrackColor = tc.dimColor.copy(alpha = 0.3f),
+        checkedThumbColor     = tc.background,
+        checkedTrackColor     = tc.accent,
+        uncheckedThumbColor   = tc.dimColor,
+        uncheckedTrackColor   = tc.dimColor.copy(alpha = 0.3f),
+        checkedIconColor      = tc.background,
+        uncheckedIconColor    = tc.dimColor,
     )
 
     val sliderColors = SliderDefaults.colors(
-        thumbColor       = tc.accent,
-        activeTrackColor = tc.accent,
-        inactiveTrackColor = tc.dimColor.copy(alpha = 0.3f),
+        thumbColor              = tc.accent,
+        activeTrackColor        = tc.accent,
+        inactiveTrackColor      = tc.accent.copy(alpha = 0.25f),
+        activeTickColor         = tc.background,
+        inactiveTickColor       = tc.accent.copy(alpha = 0.5f),
+        disabledThumbColor      = tc.dimColor,
+        disabledActiveTrackColor = tc.dimColor,
+        disabledInactiveTrackColor = tc.dimColor.copy(alpha = 0.12f),
     )
 
     DisposableEffect(Unit) {
@@ -200,7 +209,7 @@ private fun SettingsContent(
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Default.Palette, null, tint = tc.accent)
+                Icon(Icons.Default.Settings, null, tint = tc.accent)
                 Text("Settings", color = tc.foreground, style = MaterialTheme.typography.titleLarge)
             }
 
@@ -210,18 +219,29 @@ private fun SettingsContent(
                 modifier = Modifier
                     .weight(1f, fill = false)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                // === THEMES ===
+                CategoryHeader(icon = Icons.Default.Palette, title = "Themes")
                 SwitchRow("Dark mode", "Switch light and dark theme", localDarkMode, switchColors) {
                     doHaptic(); localDarkMode = it
                 }
-                SwitchRow("Wait before hide toolbar", "Toolbar hides after inactivity", localHideToolbar, switchColors) {
-                    doHaptic(); localHideToolbar = it
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Terminal theme", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(TermColorTheme.values().toList()) { t ->
+                            AnimatedChip(
+                                selected = t == localTheme,
+                                label = t.displayName,
+                                onClick = { doHaptic(); localTheme = t; onThemeChange(t) },
+                            )
+                        }
+                    }
                 }
-                SwitchRow("Double-tap toolbar", "Tap toolbar area twice to show it", localDoubleTap, switchColors) {
-                    doHaptic(); localDoubleTap = it
+                SliderRow("Font size", "${localFontSize.toInt()} sp",
+                    localFontSize, 10f..22f, 11, sliderColors) {
+                    localFontSize = it
                 }
-
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Scroll to bottom button", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
                     Text("Show button to jump to latest output", color = tc.dimColor, style = MaterialTheme.typography.bodySmall)
@@ -240,7 +260,6 @@ private fun SettingsContent(
                         }
                     }
                 }
-
                 SliderRow("Scroll button size", "${localScrollButtonSize.toInt()} dp",
                     localScrollButtonSize, 28f..64f, 8, sliderColors) {
                     localScrollButtonSize = it
@@ -249,35 +268,70 @@ private fun SettingsContent(
                     localScrollButtonTop, 4f..200f, 48, sliderColors) {
                     localScrollButtonTop = it
                 }
+
+                HorizontalDivider(color = tc.dimColor.copy(alpha = 0.2f))
+
+                // === TOOLBAR ===
+                CategoryHeader(icon = Icons.Default.Info, title = "Toolbar")
+                SwitchRow("Wait before hide toolbar", "Toolbar hides after inactivity", localHideToolbar, switchColors) {
+                    doHaptic(); localHideToolbar = it
+                }
+                SwitchRow("Double-tap toolbar", "Tap toolbar area twice to show it", localDoubleTap, switchColors) {
+                    doHaptic(); localDoubleTap = it
+                }
                 SliderRow("Toolbar height", "${localToolbarBottom.toInt()} dp",
                     localToolbarBottom, 40f..160f, 30, sliderColors) {
                     localToolbarBottom = it
                 }
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Terminal theme", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(TermColorTheme.values().toList()) { t ->
-                            AnimatedChip(
-                                selected = t == localTheme,
-                                label = t.displayName,
-                                onClick = { doHaptic(); localTheme = t; onThemeChange(t) },
-                            )
-                        }
-                    }
-                }
+                HorizontalDivider(color = tc.dimColor.copy(alpha = 0.2f))
 
-                SliderRow("Font size", "${localFontSize.toInt()} sp",
-                    localFontSize, 10f..22f, 11, sliderColors) {
-                    localFontSize = it
-                }
-
+                // === BEHAVIOUR ===
+                CategoryHeader(icon = Icons.Default.TouchApp, title = "Behaviour")
                 SwitchRow("Haptic feedback", "Vibrate on interaction", localHapticEnabled, switchColors) {
                     localHapticEnabled = it
                     if (it) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 }
+
+                HorizontalDivider(color = tc.dimColor.copy(alpha = 0.2f))
+
+                // === ABOUT ===
+                val context = androidx.compose.ui.platform.LocalContext.current
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            doHaptic()
+                            val intent = android.content.Intent(
+                                android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://github.com/savo-o/rooterm")
+                            )
+                            context.startActivity(intent)
+                        }
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text("About", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
+                        Text("author: savo", color = tc.dimColor, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text("v0.4.1", color = tc.accent, style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun CategoryHeader(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String) {
+    val tc = TermTheme.colors
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(icon, null, tint = tc.accent, modifier = Modifier.size(20.dp))
+        Text(title, color = tc.foreground, style = MaterialTheme.typography.titleMedium)
     }
 }
 
@@ -341,6 +395,8 @@ private fun AnimatedChip(selected: Boolean, label: String, onClick: () -> Unit) 
             colors   = FilterChipDefaults.filterChipColors(
                 selectedContainerColor = tc.accent,
                 selectedLabelColor     = tc.background,
+                containerColor         = tc.dimColor.copy(alpha = 0.3f),
+                labelColor             = tc.foreground,
             ),
         )
     }
