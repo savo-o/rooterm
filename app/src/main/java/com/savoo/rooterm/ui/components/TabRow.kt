@@ -11,7 +11,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,8 +56,10 @@ fun TermTabRow(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             sessions.forEachIndexed { i, session ->
@@ -148,7 +152,7 @@ private fun TermTab(
                 color      = if (selected) tc.foreground else tc.dimColor,
                 maxLines   = 1,
                 overflow   = TextOverflow.Ellipsis,
-                modifier   = Modifier.widthIn(max = 72.dp),
+                modifier   = Modifier.widthIn(max = 96.dp),
             )
 
             if (canClose) {

@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.savoo.rooterm.data.TerminalPreferences
 import com.savoo.rooterm.data.TerminalSession
+import com.savoo.rooterm.data.ScrollButtonMode
 import com.savoo.rooterm.ui.theme.TermColorTheme
 import com.savoo.rooterm.util.SuRunner
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +29,11 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
     val hideToolbar  = prefs.hideToolbar.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     val doubleTapToolbar = prefs.doubleTapToolbar.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     val darkMode = prefs.darkMode.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val scrollButton = prefs.scrollButton.stateIn(viewModelScope, SharingStarted.Eagerly, ScrollButtonMode.AUTO)
+    val scrollButtonSize = prefs.scrollButtonSize.stateIn(viewModelScope, SharingStarted.Eagerly, 28f)
+    val scrollButtonTop = prefs.scrollButtonTop.stateIn(viewModelScope, SharingStarted.Eagerly, 104f)
+    val toolbarBottom = prefs.toolbarBottom.stateIn(viewModelScope, SharingStarted.Eagerly, 65f)
+    val hapticEnabled = prefs.hapticEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val commandHistory = mutableStateListOf<String>()
 
@@ -69,7 +75,7 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
             commandHistory.removeRange(0, commandHistory.size - MAX_HISTORY)
         }
         val s = sessions.getOrNull(activeIndex.value) ?: return
-        s.scrollToBottom = true
+        s.autoScroll = true
         viewModelScope.launch(Dispatchers.IO) { SuRunner.send(s, cmd) }
     }
 
@@ -85,6 +91,11 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
     fun setHideToolbar(b: Boolean)      = viewModelScope.launch { prefs.setHideToolbar(b) }
     fun setDoubleTapToolbar(b: Boolean) = viewModelScope.launch { prefs.setDoubleTapToolbar(b) }
     fun setDarkMode(b: Boolean)         = viewModelScope.launch { prefs.setDarkMode(b) }
+    fun setScrollButton(m: ScrollButtonMode) = viewModelScope.launch { prefs.setScrollButton(m) }
+    fun setScrollButtonSize(s: Float) = viewModelScope.launch { prefs.setScrollButtonSize(s) }
+    fun setScrollButtonTop(s: Float) = viewModelScope.launch { prefs.setScrollButtonTop(s) }
+    fun setToolbarBottom(s: Float) = viewModelScope.launch { prefs.setToolbarBottom(s) }
+    fun setHapticEnabled(b: Boolean) = viewModelScope.launch { prefs.setHapticEnabled(b) }
 
     override fun onCleared() {
         super.onCleared()

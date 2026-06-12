@@ -33,7 +33,7 @@ class TerminalSession(
     @Volatile var lastRemoveHappened = false
     @Volatile var suPid: Int = 0
     @Volatile var isScrolling: Boolean = false
-    @Volatile var scrollToBottom: Boolean = false
+    @Volatile var autoScroll: Boolean = true
 
     private val pending = ArrayList<OutputLine>()
     private val lock = Any()
@@ -56,7 +56,7 @@ class TerminalSession(
     }
 
     fun flushPending(): Boolean {
-        if (isScrolling) return false
+        if (isScrolling && !autoScroll) return false
         val batch: List<OutputLine>
         synchronized(lock) {
             if (pending.isEmpty()) return false
@@ -66,9 +66,8 @@ class TerminalSession(
         }
         output.addAll(batch)
         if (output.size > 1500) {
-            val keep = output.subList(output.size - 1500, output.size).toList()
-            output.clear()
-            output.addAll(keep)
+            val trimTo = output.size - 1500
+            output.subList(0, trimTo).clear()
             lastRemoveHappened = true
         }
         return true

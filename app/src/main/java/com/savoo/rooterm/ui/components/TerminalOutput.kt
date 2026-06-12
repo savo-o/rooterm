@@ -40,7 +40,6 @@ fun TerminalOutput(
                 .fillMaxSize()
                 .background(tc.background)
                 .padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             itemsIndexed(
                 items = lines,
@@ -82,18 +81,13 @@ private fun TermLine(line: OutputLine) {
                     .background(tc.accent.copy(alpha = 0.10f))
                     .padding(horizontal = 10.dp, vertical = 4.dp),
             ) {
-                Text(
-                    text       = annotated,
-                    fontSize   = fontSize,
-                    fontFamily = fontFamily,
-                    lineHeight = lh15,
-                )
+                Text(text = annotated, fontSize = fontSize, fontFamily = fontFamily, lineHeight = lh15)
             }
         }
 
         OutputType.INFO -> {
             Row(
-                modifier          = Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
@@ -103,36 +97,20 @@ private fun TermLine(line: OutputLine) {
                         .clip(RoundedCornerShape(1.dp))
                         .background(tc.accentSecondary)
                 )
-                Text(
-                    text       = line.text,
-                    fontSize   = fontSize,
-                    fontFamily = fontFamily,
-                    color      = tc.accentSecondary,
-                    fontStyle  = FontStyle.Italic,
-                )
+                Text(text = line.text, fontSize = fontSize, fontFamily = fontFamily,
+                    color = tc.accentSecondary, fontStyle = FontStyle.Italic)
             }
         }
 
         OutputType.STDERR, OutputType.ERROR -> {
-            Text(
-                text      = line.text,
-                fontSize  = fontSize,
-                fontFamily = fontFamily,
-                color     = tc.errorColor,
-                modifier  = Modifier.padding(vertical = 1.dp),
-                lineHeight = lh14,
-            )
+            Text(text = line.text, fontSize = fontSize, fontFamily = fontFamily,
+                color = tc.errorColor, modifier = Modifier.padding(vertical = 1.dp), lineHeight = lh14)
         }
 
         OutputType.STDOUT -> {
             val annotated = remember(line.id, tc) { buildStdout(line.text, tc) }
-            Text(
-                text       = annotated,
-                fontSize   = fontSize,
-                fontFamily = fontFamily,
-                modifier   = Modifier.padding(vertical = 0.5.dp),
-                lineHeight = lh14,
-            )
+            Text(text = annotated, fontSize = fontSize, fontFamily = fontFamily,
+                modifier = Modifier.padding(vertical = 0.5.dp), lineHeight = lh14)
         }
     }
 }

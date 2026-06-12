@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -34,6 +36,7 @@ import com.savoo.rooterm.ui.theme.TermTheme
 fun CommandInput(
     onSend: (String) -> Unit,
     history: List<String>,
+    onFocused: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var text         by remember { mutableStateOf("") }
@@ -41,6 +44,7 @@ fun CommandInput(
     val focusReq     = remember { FocusRequester() }
     val tc           = TermTheme.colors
     val hasText      = text.isNotBlank()
+    var hadFocus     by remember { mutableStateOf(false) }
 
     val btnScale by animateFloatAsState(
         targetValue   = if (hasText) 1f else 0.85f,
@@ -101,6 +105,7 @@ fun CommandInput(
                 cornerRadius  = containerCorner,
                 focusReq      = focusReq,
                 onSend        = ::send,
+                onFocused     = onFocused,
                 modifier      = Modifier.weight(1f),
             )
 
@@ -136,6 +141,7 @@ private fun BasicTextField_Wrapper(
     cornerRadius: androidx.compose.ui.unit.Dp,
     focusReq: FocusRequester,
     onSend: () -> Unit,
+    onFocused: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val tc = TermTheme.colors
@@ -143,7 +149,9 @@ private fun BasicTextField_Wrapper(
     TextField(
         value         = text,
         onValueChange = onValueChange,
-        modifier      = modifier.focusRequester(focusReq),
+        modifier      = modifier
+            .focusRequester(focusReq)
+            .onFocusChanged { if (it.isFocused) onFocused() },
         placeholder = {
             Text(
                 "command…",
