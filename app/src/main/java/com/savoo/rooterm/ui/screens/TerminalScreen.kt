@@ -105,7 +105,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
         scope.launch {
             try {
                 val size = session?.output?.size ?: 0
-                if (size > 0) listState.scrollToItem(size - 1)
+                if (size > 0) listState.animateScrollToItem(size - 1)
             } catch (_: Exception) {}
         }
     }
@@ -162,7 +162,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
             .collectLatest { size ->
                 if (size > 0 && session?.autoScroll == true) {
                     try {
-                        listState.scrollToItem(size - 1)
+                        listState.animateScrollToItem(size - 1)
                         toolbarVisible = false
                     } catch (_: Exception) {}
                 }
@@ -173,7 +173,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
         if (session?.autoScroll == true) {
             try {
                 val size = session.output.size
-                if (size > 0) listState.scrollToItem(size - 1)
+                if (size > 0) listState.animateScrollToItem(size - 1)
             } catch (_: Exception) {}
         }
     }

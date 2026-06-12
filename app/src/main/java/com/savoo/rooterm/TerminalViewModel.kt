@@ -45,7 +45,7 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
         newTab()
         viewModelScope.launch(Dispatchers.Main) {
             while (isActive) {
-                delay(100)
+                delay(150)
                 for (s in sessions) s.flushPending()
             }
         }

@@ -13,8 +13,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,6 +44,15 @@ fun TermTabRow(
     modifier: Modifier = Modifier,
 ) {
     val tc = TermTheme.colors
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(activeIndex, sessions.size) {
+        if (sessions.isNotEmpty()) {
+            val tabWidth = 120
+            val target = (activeIndex * tabWidth).coerceAtMost(scrollState.maxValue)
+            scrollState.animateScrollTo(target)
+        }
+    }
 
     Row(
         modifier = modifier
@@ -58,7 +67,7 @@ fun TermTabRow(
         Row(
             modifier = Modifier
                 .weight(1f)
-                .horizontalScroll(rememberScrollState()),
+                .horizontalScroll(scrollState),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -159,6 +168,7 @@ private fun TermTab(
                 Box(
                     modifier = Modifier
                         .size(14.dp)
+                        .padding(start = 2.dp)
                         .clip(CircleShape)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },

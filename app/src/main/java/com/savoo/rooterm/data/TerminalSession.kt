@@ -56,17 +56,17 @@ class TerminalSession(
     }
 
     fun flushPending(): Boolean {
-        if (isScrolling && !autoScroll) return false
+        if (isScrolling) return false
         val batch: List<OutputLine>
         synchronized(lock) {
             if (pending.isEmpty()) return false
-            val take = minOf(pending.size, 25)
+            val take = minOf(pending.size, 15)
             batch = ArrayList(pending.subList(0, take))
             pending.subList(0, take).clear()
         }
         output.addAll(batch)
-        if (output.size > 1500) {
-            val trimTo = output.size - 1500
+        if (output.size > 1000) {
+            val trimTo = output.size - 1000
             output.subList(0, trimTo).clear()
             lastRemoveHappened = true
         }
