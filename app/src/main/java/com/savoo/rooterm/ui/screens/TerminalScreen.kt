@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -32,6 +33,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -214,7 +217,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
             .collect { size ->
                 if (size > 0 && session?.autoScroll == true) {
                     try {
-                        listState.animateScrollToItem(size - 1, scrollOffset = 0)
+                        listState.scrollToItem(size - 1)
                         toolbarVisible = false
                     } catch (_: Exception) {}
                 }
@@ -225,7 +228,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
         if (session?.autoScroll == true) {
             try {
                 val size = session.output.size
-                if (size > 0) listState.animateScrollToItem(size - 1, scrollOffset = 0)
+                if (size > 0) listState.scrollToItem(size - 1)
             } catch (_: Exception) {}
         }
     }
@@ -234,11 +237,22 @@ fun TerminalScreen(vm: TerminalViewModel) {
         computeSearchMatches()
     }
 
+    val focusManager = LocalFocusManager.current
+    val density = LocalDensity.current
+    val imeInsets = WindowInsets.ime
+    val isKeyboardVisible by remember {
+        derivedStateOf { imeInsets.getBottom(density) > 0 }
+    }
+
     BackHandler(searchActive) {
-        searchActive = false
-        searchQuery = ""
-        searchMatches = emptyList()
-        currentMatchIndex = -1
+        if (isKeyboardVisible) {
+            focusManager.clearFocus()
+        } else {
+            searchActive = false
+            searchQuery = ""
+            searchMatches = emptyList()
+            currentMatchIndex = -1
+        }
     }
 
     val showScrollButton = remember(scrollButtonMode.value, session?.autoScroll, atBottom) {
@@ -369,7 +383,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
                     IconButton(onClick = { doHaptic(); showToolbarFor(2000); searchActive = !searchActive; if (!searchActive) { searchQuery = ""; searchMatches = emptyList(); currentMatchIndex = -1 } }) {
                         Icon(Icons.Default.Search, "Search", tint = if (searchActive) tc.accent else tc.foreground)
                     }
-                    IconButton(onClick = { doHaptic(); showToolbarFor(2000); showSettings = true }) {
+                    IconButton(onClick = { doHaptic(); showToolbarFor(2000); showSettings = true; focusManager.clearFocus() }) {
                         Icon(Icons.Default.Settings, "Settings", tint = tc.foreground)
                     }
                 }

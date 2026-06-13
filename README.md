@@ -51,19 +51,12 @@ app/build/outputs/apk/debug/
 
 ## Project Status
 
-Rooterm is currently in early development.
+Rooterm is currently in development.
 
 Known issues:
 
-* Performance may degrade with very large terminal output
 * Some terminal features are still experimental
 * Not fully tested on all Android versions
-
-Warning:
-
-* Rooterm is in early development and has not undergone a security audit.
-* This software executes commands with root privileges and may contain bugs, security issues, or unexpected behavior.
-* Use at your own risk and avoid running it on devices or environments that contain sensitive data.
 
 ## License
 
