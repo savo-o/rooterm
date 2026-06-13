@@ -1,6 +1,9 @@
 package com.savoo.rooterm.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -10,22 +13,25 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
@@ -42,25 +48,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-private class CloverShape : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val r = size.width * 0.30f
-        val cx = size.width / 2f
-        val cy = size.height / 2f
-        val d = r * 0.75f
-        val path = Path()
-        fun addPetal(px: Float, py: Float) {
-            path.addOval(Rect(px - r, py - r, px + r, py + r))
-        }
-        addPetal(cx - d, cy - d)
-        addPetal(cx + d, cy - d)
-        addPetal(cx - d, cy + d)
-        addPetal(cx + d, cy + d)
-        addPetal(cx, cy)
-        return Outline.Generic(path)
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TerminalScreen(vm: TerminalViewModel) {
@@ -75,7 +62,6 @@ fun TerminalScreen(vm: TerminalViewModel) {
     val scrollButtonTop = vm.scrollButtonTop.collectAsState()
     val toolbarBottom = vm.toolbarBottom.collectAsState()
     val hapticEnabled = vm.hapticEnabled.collectAsState()
-    val haptic = LocalHapticFeedback.current
 
     val termTheme = vm.termTheme.collectAsState()
     val fontSize  = vm.fontSize.collectAsState()
@@ -89,6 +75,11 @@ fun TerminalScreen(vm: TerminalViewModel) {
     var lastFirstVisible by remember { mutableIntStateOf(0) }
     var hideJob by remember { mutableStateOf<Job?>(null) }
 
+    var searchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var searchMatches by remember { mutableStateOf(listOf<Int>()) }
+    var currentMatchIndex by remember { mutableIntStateOf(-1) }
+
     val lastVisibleIndex by remember {
         derivedStateOf { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
     }
@@ -99,15 +90,52 @@ fun TerminalScreen(vm: TerminalViewModel) {
         derivedStateOf { totalItems == 0 || lastVisibleIndex >= totalItems - 10 }
     }
 
+    val haptic = LocalHapticFeedback.current
+
+    fun doHaptic() {
+        if (hapticEnabled.value) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+
     fun scrollToBottom() {
-        session?.autoScroll = true
         toolbarVisible = false
-        scope.launch {
-            try {
-                val size = session?.output?.size ?: 0
-                if (size > 0) listState.animateScrollToItem(size - 1)
-            } catch (_: Exception) {}
+        session?.scrollNowTrigger?.intValue = (session?.scrollNowTrigger?.intValue ?: 0) + 1
+    }
+
+    fun computeSearchMatches() {
+        if (searchQuery.isBlank() || session == null) {
+            searchMatches = emptyList()
+            currentMatchIndex = -1
+            return
         }
+        val query = searchQuery.lowercase()
+        val matches = mutableListOf<Int>()
+        session.output.forEachIndexed { index, line ->
+            if (line.text.lowercase().contains(query)) {
+                matches.add(index)
+            }
+        }
+        searchMatches = matches
+        if (matches.isNotEmpty()) {
+            currentMatchIndex = 0
+            scope.launch {
+                try { listState.animateScrollToItem(matches[0]) } catch (_: Exception) {}
+            }
+        } else {
+            currentMatchIndex = -1
+        }
+    }
+
+    fun navigateMatch(forward: Boolean) {
+        if (searchMatches.isEmpty()) return
+        currentMatchIndex = if (forward) {
+            (currentMatchIndex + 1).coerceAtMost(searchMatches.lastIndex)
+        } else {
+            (currentMatchIndex - 1).coerceAtLeast(0)
+        }
+        scope.launch {
+            try { listState.animateScrollToItem(searchMatches[currentMatchIndex]) } catch (_: Exception) {}
+        }
+        doHaptic()
     }
 
     fun showToolbarFor(durationMs: Long) {
@@ -154,15 +182,39 @@ fun TerminalScreen(vm: TerminalViewModel) {
         sessions.forEach { it.isScrolling = false }
         toolbarVisible = false
         lastFirstVisible = 0
+        searchActive = false
+        searchQuery = ""
+        searchMatches = emptyList()
+        currentMatchIndex = -1
+    }
+
+    LaunchedEffect(session?.scrollNowTrigger?.intValue) {
+        if (session?.scrollNowTrigger?.intValue != 0) {
+            val size = session?.output?.size ?: 0
+            if (size > 0) {
+                try { listState.animateScrollToItem(size - 1) } catch (_: Exception) {}
+            }
+        }
+    }
+
+    LaunchedEffect(session?.suppressOutput?.value) {
+        if (session?.suppressOutput?.value == true) {
+            snapshotFlow { session?.output?.size ?: 0 }
+                .collect { size ->
+                    if (size > 0) {
+                        try { listState.scrollToItem(size - 1) } catch (_: Exception) {}
+                    }
+                }
+        }
     }
 
     LaunchedEffect(session?.id) {
         snapshotFlow { session?.output?.size ?: 0 }
             .distinctUntilChanged()
-            .collectLatest { size ->
+            .collect { size ->
                 if (size > 0 && session?.autoScroll == true) {
                     try {
-                        listState.animateScrollToItem(size - 1)
+                        listState.animateScrollToItem(size - 1, scrollOffset = 0)
                         toolbarVisible = false
                     } catch (_: Exception) {}
                 }
@@ -173,9 +225,20 @@ fun TerminalScreen(vm: TerminalViewModel) {
         if (session?.autoScroll == true) {
             try {
                 val size = session.output.size
-                if (size > 0) listState.animateScrollToItem(size - 1)
+                if (size > 0) listState.animateScrollToItem(size - 1, scrollOffset = 0)
             } catch (_: Exception) {}
         }
+    }
+
+    LaunchedEffect(searchQuery) {
+        computeSearchMatches()
+    }
+
+    BackHandler(searchActive) {
+        searchActive = false
+        searchQuery = ""
+        searchMatches = emptyList()
+        currentMatchIndex = -1
     }
 
     val showScrollButton = remember(scrollButtonMode.value, session?.autoScroll, atBottom) {
@@ -203,17 +266,34 @@ fun TerminalScreen(vm: TerminalViewModel) {
             Box(modifier = Modifier.weight(1f)) {
                 if (session != null) {
                     TerminalOutput(
-                        lines     = session.output,
-                        listState = listState,
-                        modifier  = Modifier.fillMaxSize(),
+                        lines            = session.output,
+                        listState        = listState,
+                        searchQuery      = searchQuery,
+                        currentMatchIndex = currentMatchIndex,
+                        searchMatches    = searchMatches,
+                        modifier         = Modifier.fillMaxSize(),
                     )
                 }
             }
 
             CommandInput(
-                onSend    = vm::sendCommand,
-                history   = vm.commandHistory,
-                onFocused = { scrollToBottom() },
+                onSend         = vm::sendCommand,
+                onStop         = {
+                    session?.suppressOutput?.value = true
+                    session?.autoScroll = false
+                    session?.scrollNowTrigger?.intValue = (session?.scrollNowTrigger?.intValue ?: 0) + 1
+                    vm.stopCommand()
+                },
+                isRunning      = session?.isCommandRunning?.value == true,
+                history        = vm.commandHistory,
+                onFocused      = { scrollToBottom() },
+                searchMode     = searchActive,
+                searchQuery    = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                onSearchToggle = { searchActive = !searchActive; if (!searchActive) { searchQuery = ""; searchMatches = emptyList(); currentMatchIndex = -1 } },
+                onSearchNavigate = ::navigateMatch,
+                matchCount     = searchMatches.size,
+                matchIndex     = currentMatchIndex,
             )
         }
 
@@ -222,7 +302,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 0.dp, bottom = toolbarBottom.value.dp - 4.dp)
-                    .size(width = 110.dp, height = 110.dp)
+                    .size(width = 180.dp, height = 140.dp)
                     .pointerInput(Unit) {
                         detectTapGestures(
                             onDoubleTap = { showToolbarFor(2000) }
@@ -244,7 +324,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
                 contentAlignment = Alignment.Center,
             ) {
                 FloatingActionButton(
-                    onClick        = { if (hapticEnabled.value) haptic.performHapticFeedback(HapticFeedbackType.LongPress); scrollToBottom() },
+                    onClick        = { doHaptic(); scrollToBottom() },
                     containerColor = tc.accent,
                     contentColor   = tc.background,
                     shape          = CloverShape(),
@@ -273,7 +353,7 @@ fun TerminalScreen(vm: TerminalViewModel) {
                     expanded = true,
                     floatingActionButton = {
                         FloatingActionButton(
-                            onClick        = { if (hapticEnabled.value) haptic.performHapticFeedback(HapticFeedbackType.LongPress); vm.newTab() },
+                            onClick        = { doHaptic(); vm.newTab() },
                             containerColor = tc.accent,
                             contentColor   = tc.background,
                             shape          = CloverShape(),
@@ -283,10 +363,13 @@ fun TerminalScreen(vm: TerminalViewModel) {
                         }
                     },
                 ) {
-                    IconButton(onClick = { if (hapticEnabled.value) haptic.performHapticFeedback(HapticFeedbackType.LongPress); vm.clearCurrent() }) {
+                    IconButton(onClick = { doHaptic(); showToolbarFor(2000); vm.clearCurrent() }) {
                         Icon(Icons.Default.DeleteSweep, "Clear", tint = tc.foreground)
                     }
-                    IconButton(onClick = { if (hapticEnabled.value) haptic.performHapticFeedback(HapticFeedbackType.LongPress); showSettings = true }) {
+                    IconButton(onClick = { doHaptic(); showToolbarFor(2000); searchActive = !searchActive; if (!searchActive) { searchQuery = ""; searchMatches = emptyList(); currentMatchIndex = -1 } }) {
+                        Icon(Icons.Default.Search, "Search", tint = if (searchActive) tc.accent else tc.foreground)
+                    }
+                    IconButton(onClick = { doHaptic(); showToolbarFor(2000); showSettings = true }) {
                         Icon(Icons.Default.Settings, "Settings", tint = tc.foreground)
                     }
                 }
@@ -306,6 +389,8 @@ fun TerminalScreen(vm: TerminalViewModel) {
             scrollButtonTop        = scrollButtonTop.value,
             toolbarBottom          = toolbarBottom.value,
             hapticEnabled          = hapticEnabled.value,
+            requireFingerprint     = vm.requireFingerprint.collectAsState().value,
+            blockDangerous         = vm.blockDangerous.collectAsState().value,
             onThemeChange          = vm::setTheme,
             onFontSizeChange       = vm::setFontSize,
             onHideToolbarChange    = vm::setHideToolbar,
@@ -316,7 +401,28 @@ fun TerminalScreen(vm: TerminalViewModel) {
             onScrollButtonTopChange  = vm::setScrollButtonTop,
             onToolbarBottomChange   = vm::setToolbarBottom,
             onHapticEnabledChange  = vm::setHapticEnabled,
+            onRequireFingerprintChange = vm::setRequireFingerprint,
+            onBlockDangerousChange  = vm::setBlockDangerous,
             onDismiss              = { showSettings = false },
         )
+    }
+}
+
+private class CloverShape : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val r = size.width * 0.30f
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val d = r * 0.75f
+        val path = Path()
+        fun addPetal(px: Float, py: Float) {
+            path.addOval(Rect(px - r, py - r, px + r, py + r))
+        }
+        addPetal(cx - d, cy - d)
+        addPetal(cx + d, cy - d)
+        addPetal(cx - d, cy + d)
+        addPetal(cx + d, cy + d)
+        addPetal(cx, cy)
+        return Outline.Generic(path)
     }
 }

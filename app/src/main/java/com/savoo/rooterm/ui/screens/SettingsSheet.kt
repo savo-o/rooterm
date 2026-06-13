@@ -50,6 +50,8 @@ fun SettingsSheet(
     scrollButtonTop: Float,
     toolbarBottom: Float,
     hapticEnabled: Boolean,
+    requireFingerprint: Boolean,
+    blockDangerous: Boolean,
     onThemeChange: (TermColorTheme) -> Unit,
     onFontSizeChange: (Float) -> Unit,
     onHideToolbarChange: (Boolean) -> Unit,
@@ -60,6 +62,8 @@ fun SettingsSheet(
     onScrollButtonTopChange: (Float) -> Unit,
     onToolbarBottomChange: (Float) -> Unit,
     onHapticEnabledChange: (Boolean) -> Unit,
+    onRequireFingerprintChange: (Boolean) -> Unit,
+    onBlockDangerousChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var visible by remember { mutableStateOf(false) }
@@ -92,6 +96,8 @@ fun SettingsSheet(
             scrollButtonTop = scrollButtonTop,
             toolbarBottom = toolbarBottom,
             hapticEnabled = hapticEnabled,
+            requireFingerprint = requireFingerprint,
+            blockDangerous = blockDangerous,
             onThemeChange = onThemeChange,
             onFontSizeChange = onFontSizeChange,
             onHideToolbarChange = onHideToolbarChange,
@@ -102,6 +108,8 @@ fun SettingsSheet(
             onScrollButtonTopChange = onScrollButtonTopChange,
             onToolbarBottomChange = onToolbarBottomChange,
             onHapticEnabledChange = onHapticEnabledChange,
+            onRequireFingerprintChange = onRequireFingerprintChange,
+            onBlockDangerousChange = onBlockDangerousChange,
             onDismiss = ::dismiss,
         )
     }
@@ -119,6 +127,8 @@ private fun SettingsContent(
     scrollButtonTop: Float,
     toolbarBottom: Float,
     hapticEnabled: Boolean,
+    requireFingerprint: Boolean,
+    blockDangerous: Boolean,
     onThemeChange: (TermColorTheme) -> Unit,
     onFontSizeChange: (Float) -> Unit,
     onHideToolbarChange: (Boolean) -> Unit,
@@ -129,6 +139,8 @@ private fun SettingsContent(
     onScrollButtonTopChange: (Float) -> Unit,
     onToolbarBottomChange: (Float) -> Unit,
     onHapticEnabledChange: (Boolean) -> Unit,
+    onRequireFingerprintChange: (Boolean) -> Unit,
+    onBlockDangerousChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var localHideToolbar by remember { mutableStateOf(hideToolbar) }
@@ -141,6 +153,8 @@ private fun SettingsContent(
     var localScrollButtonTop by remember { mutableFloatStateOf(scrollButtonTop) }
     var localToolbarBottom by remember { mutableFloatStateOf(toolbarBottom) }
     var localHapticEnabled by remember { mutableStateOf(hapticEnabled) }
+    var localRequireFingerprint by remember { mutableStateOf(requireFingerprint) }
+    var localBlockDangerous by remember { mutableStateOf(blockDangerous) }
 
     val tc = TermTheme.colors
     val focusManager = LocalFocusManager.current
@@ -176,6 +190,9 @@ private fun SettingsContent(
             onScrollButtonTopChange(localScrollButtonTop)
             onToolbarBottomChange(localToolbarBottom)
             onHapticEnabledChange(localHapticEnabled)
+            onRequireFingerprintChange(localRequireFingerprint)
+            onBlockDangerousChange(localBlockDangerous)
+            onFontSizeChange(localFontSize)
         }
     }
 
@@ -292,6 +309,9 @@ private fun SettingsContent(
                     localHapticEnabled = it
                     if (it) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 }
+                SwitchRow("Block dangerous commands", "Prevent destructive shell commands", localBlockDangerous, switchColors) {
+                    localBlockDangerous = it
+                }
 
                 HorizontalDivider(color = tc.dimColor.copy(alpha = 0.2f))
 
@@ -316,7 +336,7 @@ private fun SettingsContent(
                         Text("About", color = tc.foreground, style = MaterialTheme.typography.bodyLarge)
                         Text("author: savo", color = tc.dimColor, style = MaterialTheme.typography.bodySmall)
                     }
-                    Text("v0.4.1", color = tc.accent, style = MaterialTheme.typography.bodyMedium)
+                    Text("v0.5", color = tc.accent, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }

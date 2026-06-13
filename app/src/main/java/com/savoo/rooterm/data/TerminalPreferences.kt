@@ -22,7 +22,9 @@ object PrefKeys {
     val SCROLL_BUTTON_SIZE = floatPreferencesKey("scroll_button_size")
     val SCROLL_BUTTON_TOP  = floatPreferencesKey("scroll_button_top")
     val TOOLBAR_BOTTOM     = floatPreferencesKey("toolbar_bottom")
-    val HAPTIC_ENABLED    = booleanPreferencesKey("haptic_enabled")
+    val HAPTIC_ENABLED      = booleanPreferencesKey("haptic_enabled")
+    val REQUIRE_FINGERPRINT = booleanPreferencesKey("require_fingerprint")
+    val BLOCK_DANGEROUS    = booleanPreferencesKey("block_dangerous")
 }
 
 class TerminalPreferences(private val ctx: Context) {
@@ -42,6 +44,8 @@ class TerminalPreferences(private val ctx: Context) {
     val scrollButtonTop: Flow<Float> = ctx.dataStore.data.map { it[PrefKeys.SCROLL_BUTTON_TOP] ?: 104f }
     val toolbarBottom: Flow<Float> = ctx.dataStore.data.map { it[PrefKeys.TOOLBAR_BOTTOM] ?: 65f }
     val hapticEnabled: Flow<Boolean> = ctx.dataStore.data.map { it[PrefKeys.HAPTIC_ENABLED] ?: true }
+    val requireFingerprint: Flow<Boolean> = ctx.dataStore.data.map { it[PrefKeys.REQUIRE_FINGERPRINT] ?: false }
+    val blockDangerous: Flow<Boolean> = ctx.dataStore.data.map { it[PrefKeys.BLOCK_DANGEROUS] ?: false }
 
     suspend fun setTheme(t: TermColorTheme) = ctx.dataStore.edit { it[PrefKeys.THEME] = t.name }
     suspend fun setFontSize(s: Float)       = ctx.dataStore.edit { it[PrefKeys.FONT_SIZE] = s }
@@ -53,4 +57,6 @@ class TerminalPreferences(private val ctx: Context) {
     suspend fun setScrollButtonTop(s: Float) = ctx.dataStore.edit { it[PrefKeys.SCROLL_BUTTON_TOP] = s }
     suspend fun setToolbarBottom(s: Float) = ctx.dataStore.edit { it[PrefKeys.TOOLBAR_BOTTOM] = s }
     suspend fun setHapticEnabled(b: Boolean) = ctx.dataStore.edit { it[PrefKeys.HAPTIC_ENABLED] = b }
+    suspend fun setRequireFingerprint(b: Boolean) = ctx.dataStore.edit { it[PrefKeys.REQUIRE_FINGERPRINT] = b }
+    suspend fun setBlockDangerous(b: Boolean) = ctx.dataStore.edit { it[PrefKeys.BLOCK_DANGEROUS] = b }
 }

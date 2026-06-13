@@ -34,6 +34,8 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
     val scrollButtonTop = prefs.scrollButtonTop.stateIn(viewModelScope, SharingStarted.Eagerly, 104f)
     val toolbarBottom = prefs.toolbarBottom.stateIn(viewModelScope, SharingStarted.Eagerly, 65f)
     val hapticEnabled = prefs.hapticEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val requireFingerprint = prefs.requireFingerprint.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val blockDangerous = prefs.blockDangerous.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val commandHistory = mutableStateListOf<String>()
 
@@ -46,7 +48,13 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.Main) {
             while (isActive) {
                 delay(150)
-                for (s in sessions) s.flushPending()
+                val now = System.currentTimeMillis()
+                for (s in sessions) {
+                    s.flushPending()
+                    if (s.isCommandRunning.value && s.lastOutputTime > 0 && now - s.lastOutputTime > 500) {
+                        s.isCommandRunning.value = false
+                    }
+                }
             }
         }
     }
@@ -76,14 +84,16 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
         }
         val s = sessions.getOrNull(activeIndex.value) ?: return
         s.autoScroll = true
-        viewModelScope.launch(Dispatchers.IO) { SuRunner.send(s, cmd) }
+        viewModelScope.launch(Dispatchers.IO) {
+            SuRunner.sendWithCheck(s, cmd, blockDangerous.value)
+        }
     }
 
     fun clearCurrent() { sessions.getOrNull(activeIndex.value)?.clear() }
 
-    fun sendInterrupt() {
+    fun stopCommand() {
         val s = sessions.getOrNull(activeIndex.value) ?: return
-        viewModelScope.launch(Dispatchers.IO) { SuRunner.sendInterrupt(s) }
+        viewModelScope.launch(Dispatchers.IO) { SuRunner.stopCommand(s) }
     }
 
     fun setTheme(t: TermColorTheme)     = viewModelScope.launch { prefs.setTheme(t) }
@@ -96,6 +106,8 @@ class TerminalViewModel(app: Application) : AndroidViewModel(app) {
     fun setScrollButtonTop(s: Float) = viewModelScope.launch { prefs.setScrollButtonTop(s) }
     fun setToolbarBottom(s: Float) = viewModelScope.launch { prefs.setToolbarBottom(s) }
     fun setHapticEnabled(b: Boolean) = viewModelScope.launch { prefs.setHapticEnabled(b) }
+    fun setRequireFingerprint(b: Boolean) = viewModelScope.launch { prefs.setRequireFingerprint(b) }
+    fun setBlockDangerous(b: Boolean) = viewModelScope.launch { prefs.setBlockDangerous(b) }
 
     override fun onCleared() {
         super.onCleared()

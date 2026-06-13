@@ -33,7 +33,11 @@ class TerminalSession(
     @Volatile var lastRemoveHappened = false
     @Volatile var suPid: Int = 0
     @Volatile var isScrolling: Boolean = false
-    @Volatile var autoScroll: Boolean = true
+    @Volatile var autoScroll: Boolean = false
+    var isCommandRunning = androidx.compose.runtime.mutableStateOf(false)
+    var suppressOutput = androidx.compose.runtime.mutableStateOf(false)
+    var scrollNowTrigger = androidx.compose.runtime.mutableIntStateOf(0)
+    @Volatile var lastOutputTime: Long = 0
 
     private val pending = ArrayList<OutputLine>()
     private val lock = Any()
@@ -57,6 +61,7 @@ class TerminalSession(
 
     fun flushPending(): Boolean {
         if (isScrolling) return false
+        if (suppressOutput.value) { synchronized(lock) { pending.clear() }; return false }
         val batch: List<OutputLine>
         synchronized(lock) {
             if (pending.isEmpty()) return false
